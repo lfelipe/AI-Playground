@@ -55,11 +55,12 @@ import { useErrors } from './errors'
 import { createTelegramAdapter } from './channels/telegramAdapter'
 import { createSlackAdapter } from './channels/slackAdapter'
 import { createLocalWebAdapter } from './channels/localWebAdapter'
+import { createSignalAdapter } from './channels/signalAdapter'
 
 // ── Channel registry ────────────────────────────────────────────────────────
 // Kinds we manage in this store. Adding a fourth one means appending to this
 // list and dropping in a new adapter — no other edits to this file.
-const KINDS = ['telegram', 'slack', 'local-web'] as readonly ChannelKind[]
+const KINDS = ['telegram', 'slack', 'local-web', 'signal'] as readonly ChannelKind[]
 
 /**
  * Pending state for the interactive `/imgGen` preset picker.
@@ -156,6 +157,7 @@ export const useHomeAgent = defineStore(
       slack: emptyPrefs(),
       discord: emptyPrefs(),
       'local-web': emptyPrefs(),
+      signal: emptyPrefs(),
     })
 
     // Runtime-only per-channel state (secret config + derived `active`). Never
@@ -165,6 +167,7 @@ export const useHomeAgent = defineStore(
       slack: emptyRuntimeState('slack'),
       discord: emptyRuntimeState('discord'),
       'local-web': emptyRuntimeState('local-web'),
+      signal: emptyRuntimeState('signal'),
     })
 
     // Per-channel message queues — `channels[kind].active` flips the polling
@@ -174,6 +177,7 @@ export const useHomeAgent = defineStore(
       slack: [] as ChannelQueueItem[],
       discord: [] as ChannelQueueItem[],
       'local-web': [] as ChannelQueueItem[],
+      signal: [] as ChannelQueueItem[],
     } satisfies Record<ChannelKind, ChannelQueueItem[]>
 
     // Adapter instances — one per kind. Created at setup time; their methods
@@ -184,6 +188,7 @@ export const useHomeAgent = defineStore(
       slack: createSlackAdapter(),
       discord: null, // populated when Discord lands
       'local-web': createLocalWebAdapter(),
+      signal: createSignalAdapter(),
     }
 
     /**
@@ -2491,6 +2496,13 @@ export const useHomeAgent = defineStore(
     const telegramChatId = computed(() => channelPrefs.telegram.identity ?? '')
     const slackVerified = computed(() => channelPrefs.slack.verified)
     const slackUserId = computed(() => channelPrefs.slack.identity ?? '')
+    const signalVerified = computed(() => channelPrefs.signal.verified)
+    // The detected contact the bot answers (its identity, like a chat id).
+    const signalPeer = computed(() => channelPrefs.signal.identity ?? '')
+    // The bot's own linked number, held in the in-memory (secret) config.
+    const signalAccount = computed(
+      () => (channels.signal.config as { account?: string }).account ?? '',
+    )
 
     return {
       isHomeAgentActive,
@@ -2504,6 +2516,9 @@ export const useHomeAgent = defineStore(
       telegramChatId,
       slackVerified,
       slackUserId,
+      signalVerified,
+      signalPeer,
+      signalAccount,
       isAvailable,
       hasConfiguredChannel,
       homeAgentBaseUrl,
