@@ -439,6 +439,7 @@ class SignalChannel(ChannelBase):
         render as a QR. The setup screen then polls `get_identity` (once the
         user messages the bot) exactly like Telegram's chat-id detection.
         """
+        self.request_shutdown()
         try:
             self._ensure_daemon()
         except Exception as exc:
