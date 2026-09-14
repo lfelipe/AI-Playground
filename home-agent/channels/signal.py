@@ -227,6 +227,8 @@ class SignalChannel(ChannelBase):
             self._write_account(account)
         if peer:
             self._allowed_peer = peer
+            self._last_seen_peer = peer
+            self.persist_identity(peer)
         try:
             self._ensure_daemon()
             self._subscribe()
