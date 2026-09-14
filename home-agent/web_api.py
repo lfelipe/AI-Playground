@@ -36,6 +36,15 @@ CORS(app)
 # our port. Require an `X-AIPG-Auth` header matching the per-launch token the
 # Electron main process injected via env. Mirrors the `ai-backend` pattern.
 _LOOPBACK_AUTH_TOKEN = get_loopback_token()
+if _LOOPBACK_AUTH_TOKEN:
+    try:
+        from pathlib import Path
+        import tempfile
+        _tp = Path(tempfile.gettempdir()) / "aipg_home_agent_token"
+        _tp.write_text(_LOOPBACK_AUTH_TOKEN)
+        _tp.chmod(0o600)
+    except Exception:
+        pass
 
 
 @app.before_request

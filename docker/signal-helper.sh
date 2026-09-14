@@ -7,6 +7,10 @@ fi
 LINK_URI_FILE="$DATA_DIR/latest_link_uri.txt"
 
 get_auth_token() {
+    if [ -f "/tmp/aipg_home_agent_token" ]; then
+        cat "/tmp/aipg_home_agent_token"
+        return
+    fi
     local pid=$(pgrep -f "web_api.py" | head -n1)
     if [ -n "$pid" ] && [ -r "/proc/$pid/environ" ]; then
         cat "/proc/$pid/environ" | tr '\0' '\n' | grep "^AIPG_LOOPBACK_TOKEN=" | cut -d= -f2
