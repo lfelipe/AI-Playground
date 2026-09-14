@@ -278,7 +278,7 @@ def channel_command(kind: str, name: str):
 def chat_completions():
     upstream = request.headers.get("X-Upstream-Url")
     with _upstream_lock:
-        upstream = upstream or _upstream_url
+        upstream = _upstream_url or upstream
     if not upstream:
         return jsonify({"error": "No upstream URL provided"}), 400
     return proxy_chat_completions(upstream, request)
