@@ -6,6 +6,8 @@ services:
     container_name: aipg-app
     user: "0:0"
     network_mode: host
+    ipc: host
+    shm_size: '2gb'
     environment:
       - DISPLAY=:99
       - AIPG_SIGNAL_CLI_PATH=/usr/local/bin/signal-cli

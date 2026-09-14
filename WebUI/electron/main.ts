@@ -245,6 +245,7 @@ if (process.platform === 'linux') {
   app.disableHardwareAcceleration()
   app.commandLine.appendSwitch('disable-gpu')
   app.commandLine.appendSwitch('no-sandbox')
+  app.commandLine.appendSwitch('disable-dev-shm-usage')
   // Chromium may select gnome_libsecret from XDG_CURRENT_DESKTOP even when no
   // keyring daemon is running. setUsePlainTextEncryption cannot override that
   // backend, so --password-store=basic must be set before app.whenReady().
@@ -734,6 +735,7 @@ async function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
+      sandbox: false,
     },
   })
   setWebBrowserMainWindow(win)
