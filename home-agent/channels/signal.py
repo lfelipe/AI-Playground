@@ -221,7 +221,7 @@ class SignalChannel(ChannelBase):
         just (idempotently) starts it and updates the outbound target.
         """
         account = (config.get("account") or "").strip()
-        peer = (config.get("peer") or "").strip()
+        peer = (config.get("peer") or config.get("allowed_peer") or "").strip()
         if account:
             self._account = account
             self._write_account(account)
