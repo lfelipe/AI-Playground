@@ -208,6 +208,7 @@ class SignalChannel(ChannelBase):
             self._allowed_peer = peer
         try:
             self._ensure_daemon()
+            self._subscribe()
         except Exception as exc:
             return {"error": f"could not start signal-cli: {exc}", "_http_status": 500}
         return {"status": "started"}
@@ -493,6 +494,7 @@ class SignalChannel(ChannelBase):
             self._account = str(number)
             self._write_account(self._account)
             logger.info("Signal linked as a new device: %s", self._account)
+            self._subscribe()
 
     # ── Daemon lifecycle ──────────────────────────────────────────────────
     def _ensure_daemon(self) -> None:
@@ -548,6 +550,15 @@ class SignalChannel(ChannelBase):
                 raise
             self._rpc = _JsonRpcClient(sock, self._on_receive)
             self._app_instance = self._proc
+            self._subscribe()
+
+    def _subscribe(self) -> None:
+        if self._rpc is not None and self._account:
+            try:
+                self._rpc.call("subscribeReceive", {"account": self._account}, timeout=10)
+                logger.info("Subscribed to receive Signal messages for %s", self._account)
+            except Exception as exc:
+                logger.warning("Could not subscribe to receive: %s", exc)
 
     def _connect_socket(self, port: int) -> socket.socket:
         deadline = time.monotonic() + _CONNECT_TIMEOUT_SECONDS
