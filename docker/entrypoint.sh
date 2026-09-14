@@ -26,29 +26,28 @@ fi
 websockify --web="$NOVNC_DIR" 6080 localhost:5900 &
 sleep 1
 
-echo "========================================================"
-echo "AI Playground WebUI is accessible via browser at:"
-echo "  http://localhost:6080/vnc.html"
-echo "========================================================"
-
-cd /app/WebUI
-
-# Ensure node_modules and resources exist
-if [ ! -d "node_modules" ] || [ ! -f "node_modules/electron/path.txt" ]; then
-    echo "Installing WebUI dependencies and resources..."
-    npm install
-    npm run fetch-external-resources
-    npm run ensure-electron
-    npm run ensure-native-modules || true
-fi
-
-# Pre-cache signal-cli in user's app data as well
-mkdir -p "$HOME/.config/AI-Playground/signal-cli/0.14.8"
-ln -sf /usr/local/bin/signal-cli "$HOME/.config/AI-Playground/signal-cli/0.14.8/signal-cli"
-
-echo "Launching AI Playground..."
-if [ "$#" -eq 0 ]; then
-    exec npm run dev
-else
+if [ "$#" -gt 0 ]; then
     exec "$@"
 fi
+
+if [ -d "/app/WebUI" ]; then
+    cd /app/WebUI
+
+    # Ensure node_modules and resources exist
+    if [ ! -d "node_modules" ] || [ ! -f "node_modules/electron/path.txt" ]; then
+        echo "Installing WebUI dependencies and resources..."
+        npm install
+        npm run fetch-external-resources
+        npm run ensure-electron
+        npm run ensure-native-modules || true
+    fi
+
+    # Pre-cache signal-cli in user's app data as well
+    mkdir -p "$HOME/.config/AI-Playground/signal-cli/0.14.8"
+    ln -sf /usr/local/bin/signal-cli "$HOME/.config/AI-Playground/signal-cli/0.14.8/signal-cli"
+
+    echo "Launching AI Playground..."
+    exec npm run dev
+fi
+
+exec sleep infinity
