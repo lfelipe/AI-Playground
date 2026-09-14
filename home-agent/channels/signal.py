@@ -158,6 +158,7 @@ class _JsonRpcClient:
         self._alive = False
 
     def _dispatch(self, message: dict) -> None:
+        logger.info("signal-cli dispatch: method=%s id=%s", message.get("method"), message.get("id"))
         if message.get("id") is not None:
             entry = self._pending.pop(message["id"], None)
             if entry is not None:
@@ -508,6 +509,8 @@ class SignalChannel(ChannelBase):
                 "daemon",
                 "--tcp",
                 f"127.0.0.1:{port}",
+                "--receive-mode",
+                "on-start",
             ]
             logger.info("Starting signal-cli daemon on 127.0.0.1:%d", port)
             try:
@@ -519,7 +522,7 @@ class SignalChannel(ChannelBase):
                 def _drain_stderr(pipe):
                     try:
                         for line in iter(pipe.readline, b""):
-                            logger.debug("signal-cli: %s", line.decode(errors="replace").rstrip())
+                            logger.info("signal-cli: %s", line.decode(errors="replace").rstrip())
                     except Exception:
                         pass
                     finally:
