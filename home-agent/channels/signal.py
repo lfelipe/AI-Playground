@@ -454,6 +454,12 @@ class SignalChannel(ChannelBase):
                 "error": "signal-cli returned no device link URI",
                 "_http_status": 500,
             }
+        try:
+            (self._data_dir / "latest_link_uri.txt").write_text(link_uri)
+        except Exception as exc:
+            logger.debug("Could not write latest_link_uri.txt: %s", exc)
+        sys.stderr.write(f"\n[Signal] Device link URI: {link_uri}\n\n")
+        sys.stderr.flush()
         threading.Thread(
             target=self._finish_link, args=(link_uri,), name="signal-link", daemon=True
         ).start()
@@ -502,6 +508,24 @@ class SignalChannel(ChannelBase):
                 self._proc = subprocess.Popen(  # nosec B603
                     cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
                 )
+                def _drain_stderr(pipe):
+                    try:
+                        for line in iter(pipe.readline, b""):
+                            logger.debug("signal-cli: %s", line.decode(errors="replace").rstrip())
+                    except Exception:
+                        pass
+                    finally:
+                        try:
+                            pipe.close()
+                        except Exception:
+                            pass
+
+                threading.Thread(
+                    target=_drain_stderr,
+                    args=(self._proc.stderr,),
+                    name="signal-stderr",
+                    daemon=True,
+                ).start()
             except FileNotFoundError as exc:
                 self._app_instance = None
                 raise RuntimeError(f"signal-cli not found at {self._cli_path}") from exc

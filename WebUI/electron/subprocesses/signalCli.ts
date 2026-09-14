@@ -15,7 +15,7 @@ const execFileAsync = promisify(execFile)
 
 /** Pinned signal-cli release. Signal expires clients after ~3 months, so bump
  *  this periodically. */
-export const SIGNAL_CLI_VERSION = '0.13.18'
+export const SIGNAL_CLI_VERSION = '0.14.8'
 
 const releaseAssetUrl = (asset: string): string =>
   `https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/${asset}`
