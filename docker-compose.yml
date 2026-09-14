@@ -1,0 +1,21 @@
+services:
+  ai-playground:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: aipg-app
+    network_mode: host
+    environment:
+      - DISPLAY=:99
+      - AIPG_SIGNAL_CLI_PATH=/usr/local/bin/signal-cli
+    volumes:
+      - .:/app
+      - aipg_node_modules:/app/WebUI/node_modules
+      - aipg_config:/home/lstrano/.config
+      - aipg_signal_data:/home/lstrano/.config/AI-Playground/signal-cli-data
+    restart: unless-stopped
+
+volumes:
+  aipg_node_modules:
+  aipg_config:
+  aipg_signal_data:
