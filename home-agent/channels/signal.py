@@ -424,6 +424,8 @@ class SignalChannel(ChannelBase):
         if name == "startLink":
             return self._start_link()
         if name == "linkStatus":
+            if not self._account:
+                self._account = self._read_account()
             return {
                 "status": "ok",
                 "linked": bool(self._account),
@@ -480,12 +482,16 @@ class SignalChannel(ChannelBase):
             logger.warning("Signal device linking did not complete: %s", exc)
             return
         number = None
-        if isinstance(result, dict):
-            number = result.get("number") or result.get("account")
+        if isinstance(result, str):
+            number = result
+        elif isinstance(result, dict):
+            number = result.get("number") or result.get("account") or result.get("uuid")
+        if not number:
+            number = self._read_account()
         if number:
             self._account = str(number)
             self._write_account(self._account)
-            logger.info("Signal linked as a new device")
+            logger.info("Signal linked as a new device: %s", self._account)
 
     # ── Daemon lifecycle ──────────────────────────────────────────────────
     def _ensure_daemon(self) -> None:
@@ -637,9 +643,24 @@ class SignalChannel(ChannelBase):
     # ── Account persistence ──────────────────────────────────────────────
     def _read_account(self) -> str:
         try:
-            return self._account_file.read_text().strip()
+            val = self._account_file.read_text().strip()
+            if val:
+                return val
         except FileNotFoundError:
-            return ""
+            pass
+        try:
+            accounts_file = self._data_dir / "data" / "accounts.json"
+            if accounts_file.exists():
+                data = json.loads(accounts_file.read_text())
+                accs = data.get("accounts", [])
+                if accs and isinstance(accs, list):
+                    num = accs[0].get("number") or accs[0].get("uuid")
+                    if num:
+                        self._write_account(str(num))
+                        return str(num)
+        except Exception:
+            pass
+        return ""
 
     def _write_account(self, value: str) -> None:
         try:
