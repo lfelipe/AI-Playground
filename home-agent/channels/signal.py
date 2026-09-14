@@ -139,9 +139,13 @@ class _JsonRpcClient:
         while self._alive:
             try:
                 chunk = self._sock.recv(65536)
-            except OSError:
+            except OSError as exc:
+                if self._alive:
+                    logger.warning("signal-cli socket recv error: %s", exc)
                 break
             if not chunk:
+                if self._alive:
+                    logger.info("signal-cli socket closed by peer")
                 break
             buffer += chunk
             while b"\n" in buffer:
@@ -154,10 +158,25 @@ class _JsonRpcClient:
                 except (ValueError, UnicodeDecodeError) as exc:
                     logger.debug("signal-cli sent a non-JSON line: %s", exc)
                     continue
-                self._dispatch(message)
+                try:
+                    self._dispatch(message)
+                except Exception as exc:
+                    logger.error("signal-cli dispatch error: %s", exc, exc_info=True)
         self._alive = False
+        with self._id_lock:
+            for event, box in self._pending.values():
+                box["error"] = {"message": "signal-cli socket closed"}
+                event.set()
+            self._pending.clear()
 
-    def _dispatch(self, message: dict) -> None:
+    def _dispatch(self, message: dict | list) -> None:
+        if isinstance(message, list):
+            for item in message:
+                self._dispatch(item)
+            return
+        if not isinstance(message, dict):
+            logger.warning("signal-cli sent non-dict message: %r", message)
+            return
         logger.info("signal-cli dispatch: method=%s id=%s", message.get("method"), message.get("id"))
         if message.get("id") is not None:
             entry = self._pending.pop(message["id"], None)
@@ -190,6 +209,8 @@ class SignalChannel(ChannelBase):
             os.environ.get("AIPG_SIGNAL_CLI_HOME") or (base_dir / ".signal-data")
         )
         self._cli_path = os.environ.get("AIPG_SIGNAL_CLI_PATH") or "signal-cli"
+        self._seen_timestamps: set[int] = set()
+        self._seen_lock = threading.Lock()
 
     # ── Channel protocol: lifecycle ───────────────────────────────────────
     def set_config(self, config: dict) -> dict:
@@ -567,7 +588,9 @@ class SignalChannel(ChannelBase):
             if self._proc is not None and self._proc.poll() is not None:
                 raise RuntimeError("signal-cli exited before its socket opened")
             try:
-                return socket.create_connection(("127.0.0.1", port), timeout=5)
+                sock = socket.create_connection(("127.0.0.1", port), timeout=5)
+                sock.settimeout(None)
+                return sock
             except OSError as exc:
                 last_error = exc
                 time.sleep(0.25)
@@ -583,7 +606,21 @@ class SignalChannel(ChannelBase):
             self.persist_identity(number)
 
     def _on_receive(self, params: dict) -> None:
-        envelope = params.get("envelope") or {}
+        envelope = params.get("envelope")
+        if not envelope and isinstance(params.get("result"), dict):
+            envelope = params["result"].get("envelope")
+        if not isinstance(envelope, dict):
+            return
+
+        ts = envelope.get("timestamp")
+        if ts is not None:
+            with self._seen_lock:
+                if ts in self._seen_timestamps:
+                    return
+                self._seen_timestamps.add(ts)
+                if len(self._seen_timestamps) > 1000:
+                    self._seen_timestamps.clear()
+
         source = envelope.get("sourceNumber") or envelope.get("source") or ""
         data_message = envelope.get("dataMessage")
 
