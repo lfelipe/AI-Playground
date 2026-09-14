@@ -572,16 +572,31 @@ class SignalChannel(ChannelBase):
         envelope = params.get("envelope") or {}
         source = envelope.get("sourceNumber") or envelope.get("source") or ""
         data_message = envelope.get("dataMessage")
-        # Receipts, typing notifications and own-device syncs carry no
-        # dataMessage — nothing to hand to the dispatcher.
+
+        # In a linked-device setup, messages the user sends to "Note to Self"
+        # arrive via syncMessage -> sentMessage addressed to their own account.
+        if not data_message:
+            sync_message = envelope.get("syncMessage")
+            if isinstance(sync_message, dict):
+                sent_message = sync_message.get("sentMessage")
+                if isinstance(sent_message, dict):
+                    dest = (
+                        sent_message.get("destinationNumber")
+                        or sent_message.get("destination")
+                        or ""
+                    )
+                    if dest and (dest == self._account or not self._account):
+                        data_message = sent_message
+                        source = dest or self._account
+
         if not source or not isinstance(data_message, dict):
             return
         self._record_authorized_peer(str(source))
         if not self._allowed_peer:
-            logger.info("Signal detection mode: message from a new number")
+            logger.info("Signal detection mode: message from a new number: %s", source)
             return
         if str(source) != self._allowed_peer:
-            logger.warning("Ignoring Signal message from unauthorized number")
+            logger.warning("Ignoring Signal message from unauthorized number: %s", source)
             return
         item: dict = {
             "text": data_message.get("message") or "",
