@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     container_name: aipg-app
+    user: "0:0"
     network_mode: host
     environment:
       - DISPLAY=:99

@@ -1,6 +1,19 @@
 #!/bin/bash
 set -e
 
+# If running as root, fix volume permissions and drop to lstrano
+if [ "$(id -u)" = "0" ]; then
+    rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
+    chown -R lstrano:lstrano /home/lstrano 2>/dev/null || true
+    if [ -d "/app/WebUI/node_modules" ]; then
+        chown -R lstrano:lstrano /app/WebUI/node_modules 2>/dev/null || true
+    fi
+    exec gosu lstrano "$0" "$@"
+fi
+
+# Clean up any stale X locks
+rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
+
 # Setup dbus session daemon if not running
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     eval $(dbus-launch --sh-syntax)

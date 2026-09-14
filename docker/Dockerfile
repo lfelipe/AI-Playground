@@ -43,6 +43,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dbus-x11 \
     fonts-noto-color-emoji \
     fonts-dejavu-core \
+    gosu \
+    sudo \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -61,6 +63,8 @@ RUN curl -sL https://github.com/AsamK/signal-cli/releases/download/v0.14.8/signa
 # Rename existing ubuntu user (uid 1000) to lstrano
 RUN usermod -l lstrano -d /home/lstrano -m ubuntu && \
     groupmod -n lstrano ubuntu && \
+    echo "lstrano ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/lstrano && \
+    chmod 0440 /etc/sudoers.d/lstrano && \
     mkdir -p /app /home/lstrano/.config /home/lstrano/.cache /home/lstrano/.local && \
     chown -R lstrano:lstrano /app /home/lstrano
 
