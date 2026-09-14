@@ -58,10 +58,11 @@ RUN curl -sL https://github.com/AsamK/signal-cli/releases/download/v0.14.8/signa
     mv /tmp/signal-cli /usr/local/bin/signal-cli && \
     chmod 755 /usr/local/bin/signal-cli
 
-# Match host user (uid 1000)
-RUN useradd -m -u 1000 -s /bin/bash lstrano && \
+# Rename existing ubuntu user (uid 1000) to lstrano
+RUN usermod -l lstrano -d /home/lstrano -m ubuntu && \
+    groupmod -n lstrano ubuntu && \
     mkdir -p /app /home/lstrano/.config /home/lstrano/.cache /home/lstrano/.local && \
-    chown -R lstrano:lstrano /home/lstrano
+    chown -R lstrano:lstrano /app /home/lstrano
 
 USER lstrano
 ENV HOME=/home/lstrano
