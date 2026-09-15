@@ -1704,7 +1704,6 @@ export const useTextInference = defineStore(
     )
 
     function getDefaultToolsEnabled(preset: ChatPreset): boolean {
-      if (!modelSupportsToolCalling.value) return false
       return preset.toolsEnabledByDefault ?? preset.requiresToolCalling === true
     }
 
