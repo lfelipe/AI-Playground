@@ -5,7 +5,7 @@ set -e
 if [ "$(id -u)" = "0" ]; then
     rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
     chown -R lstrano:lstrano /home/lstrano 2>/dev/null || true
-    mkdir -p /app/service/.venv /app/models /app/OpenVINO/ovms 2>/dev/null || true
+    mkdir -p /app/service/.venv /app/models /app/OpenVINO 2>/dev/null || true
     for dir in /app/WebUI/node_modules /app/service/.venv /app/models /app/OpenVINO; do
         if [ -d "$dir" ]; then
             chown -R lstrano:lstrano "$dir" 2>/dev/null || true

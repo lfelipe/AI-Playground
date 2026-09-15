@@ -23,7 +23,6 @@ services:
       - aipg_signal_data:/home/lstrano/.config/AI-Playground/signal-cli-data
       - aipg_service_venv:/app/service/.venv
       - aipg_models:/app/models
-      - aipg_ovms:/app/OpenVINO/ovms
     restart: unless-stopped
 
 volumes:
@@ -32,4 +31,3 @@ volumes:
   aipg_signal_data:
   aipg_service_venv:
   aipg_models:
-  aipg_ovms:
