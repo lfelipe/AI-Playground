@@ -366,7 +366,7 @@ async function runImageEdit(
       return createErrorResult(`Failed to switch to preset "${preset.name}"`)
     }
 
-    await imageGeneration.ensureModelsAreAvailable()
+    await imageGeneration.ensureModelsAreAvailable(options.abortSignal)
 
     imageGeneration.prompt = args.prompt
     imageGeneration.negativePrompt =

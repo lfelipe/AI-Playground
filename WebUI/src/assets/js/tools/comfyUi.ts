@@ -494,7 +494,7 @@ async function runComfyGeneration(
     console.log('[ComfyUI Tool] Ensuring models are available')
 
     // Ensure required models are available before proceeding
-    await imageGeneration.ensureModelsAreAvailable()
+    await imageGeneration.ensureModelsAreAvailable(options.abortSignal)
 
     // Set temporary values, using preset defaults when tool args don't provide values
     // Always use preset defaults, not saved values
@@ -914,7 +914,7 @@ function getToolDefinition() {
   }
 
   description += `Available workflows: ${workflowOptions}. `
-  description += `IMPORTANT: You MUST use '${defaultWorkflow}' (which will automatically use the "Fast" variant, equivalent to '${defaultWorkflowWithVariant}') unless the user explicitly requests higher quality, a different model, or a different media type.\n\n`
+  description += `IMPORTANT: You MUST use '${defaultWorkflow}' (which will automatically use the "Fast" variant, equivalent to '${defaultWorkflowWithVariant}') unless the user explicitly requests a different workflow by name or a different media type (e.g. video).\n\n`
 
   // Add explicit warnings for video workflows
   if (videoWorkflows.length > 0) {
@@ -930,7 +930,7 @@ function getToolDefinition() {
     workflowNames.length > 0 ? z.enum(workflowNames as [string, ...string[]]) : z.string()
 
   let workflowDescription = `Workflow name to use for generation. Available options: ${workflowOptions}. `
-  workflowDescription += `Use ${defaultWorkflow} (will automatically use "Fast" variant if available, equivalent to '${defaultWorkflowWithVariant}') unless user specifically requests higher quality or different model. `
+  workflowDescription += `Use ${defaultWorkflow} (will automatically use "Fast" variant if available, equivalent to '${defaultWorkflowWithVariant}') unless user specifically requests a different workflow by name or a different media type.`
   if (videoWorkflows.length > 0) {
     workflowDescription += `IMPORTANT: Only use video workflows (${videoWorkflows.map((w) => w.name).join(', ')}) when the user explicitly asks for video generation. Never use video workflows for image requests.`
   }
