@@ -247,16 +247,6 @@ async function runComfyGeneration(
     }
   }
 
-  if (!useDeveloperSettings().keepModelsLoaded) {
-    // Wait for any in-flight chat stream (the request that carried this tool
-    // call) to finish before freeing the GPU, so stopping the chat backend
-    // can't reset an open llama.cpp socket mid-stream (=> "network error").
-    // Replaces a fixed 100ms guess; bounded internally so a stuck stream can't
-    // hang generation.
-    await useTextInference().waitForInferenceIdle()
-    await stopChatBackends()
-  }
-
   // Ensure ComfyUI backend is running - this is unrecoverable
   const comfyUiService = backendServices.info.find((item) => item.serviceName === 'comfyui-backend')
   if (!comfyUiService || comfyUiService.status !== 'running') {
@@ -472,7 +462,19 @@ async function runComfyGeneration(
     }
   }
 
+  let chatBackendStopped = false
   try {
+    if (!useDeveloperSettings().keepModelsLoaded) {
+      // Wait for any in-flight chat stream (the request that carried this tool
+      // call) to finish before freeing the GPU, so stopping the chat backend
+      // can't reset an open llama.cpp socket mid-stream (=> "network error").
+      // Replaces a fixed 100ms guess; bounded internally so a stuck stream can't
+      // hang generation.
+      await useTextInference().waitForInferenceIdle()
+      await stopChatBackends()
+      chatBackendStopped = true
+    }
+
     // Set the active preset and variant using the orchestrator
     // Use the resolved preset name (which might differ from args.workflow if we fell back)
     const presetSwitching = usePresetSwitching()
@@ -732,7 +734,7 @@ async function runComfyGeneration(
     await restoreState()
     // Nothing to hand back to while the queue still holds generations: they want
     // ComfyUI loaded and have no use for the LLM (see comfyRunsWaiting).
-    if (!useDeveloperSettings().keepModelsLoaded && !comfyRunsWaiting()) {
+    if (chatBackendStopped && !useDeveloperSettings().keepModelsLoaded && !comfyRunsWaiting()) {
       activities.update(toolActivityId, { label: i18nState.COM_ACTIVITY_RELOADING_CHAT })
       await returnGpuToChat(() => comfyUi.free())
     }
