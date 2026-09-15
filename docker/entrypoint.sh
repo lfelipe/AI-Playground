@@ -5,12 +5,24 @@ set -e
 if [ "$(id -u)" = "0" ]; then
     rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
     chown -R lstrano:lstrano /home/lstrano 2>/dev/null || true
-    mkdir -p /app/service/.venv /app/models /app/OpenVINO 2>/dev/null || true
-    for dir in /app/WebUI/node_modules /app/service/.venv /app/models /app/OpenVINO; do
+    mkdir -p /home/lstrano/intel /app/service/.venv /app/models /app/OpenVINO 2>/dev/null || true
+    for dir in /app/WebUI/node_modules /app/service/.venv /app/models /app/OpenVINO /home/lstrano; do
         if [ -d "$dir" ]; then
             chown -R lstrano:lstrano "$dir" 2>/dev/null || true
         fi
     done
+    if [ -d /dev/dri ]; then
+        for dev in /dev/dri/*; do
+            if [ -e "$dev" ]; then
+                DEV_GID=$(stat -c '%g' "$dev")
+                if ! getent group "$DEV_GID" >/dev/null; then
+                    groupadd -g "$DEV_GID" "hostdev_$DEV_GID" 2>/dev/null || true
+                fi
+                GROUP_NAME=$(getent group "$DEV_GID" | cut -d: -f1)
+                usermod -aG "$GROUP_NAME" lstrano 2>/dev/null || true
+            fi
+        done
+    fi
     exec gosu lstrano "$0" "$@"
 fi
 
