@@ -49,6 +49,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Intel graphics, Level Zero, OpenCL, OpenVINO dependencies, and hardware tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    gpg-agent \
+    pciutils \
+    clinfo \
+    libtbb12 \
+    libhwloc15 \
+    libgomp1 \
+    libnuma1 \
+    libfuse2t64 \
+    ocl-icd-libopencl1 \
+    mesa-vulkan-drivers \
+    libdrm-intel1 \
+    && add-apt-repository -y ppa:kobuk-team/intel-graphics \
+    && curl -fsSL https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /usr/share/keyrings/intel-oneapi-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/intel-oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" > /etc/apt/sources.list.d/oneAPI.list \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    intel-opencl-icd \
+    libze1 \
+    libze-intel-gpu1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install uv system-wide
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/local/bin/uv && \

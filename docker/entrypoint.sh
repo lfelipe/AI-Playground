@@ -5,9 +5,12 @@ set -e
 if [ "$(id -u)" = "0" ]; then
     rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
     chown -R lstrano:lstrano /home/lstrano 2>/dev/null || true
-    if [ -d "/app/WebUI/node_modules" ]; then
-        chown -R lstrano:lstrano /app/WebUI/node_modules 2>/dev/null || true
-    fi
+    mkdir -p /app/service/.venv /app/models /app/OpenVINO/ovms 2>/dev/null || true
+    for dir in /app/WebUI/node_modules /app/service/.venv /app/models /app/OpenVINO; do
+        if [ -d "$dir" ]; then
+            chown -R lstrano:lstrano "$dir" 2>/dev/null || true
+        fi
+    done
     exec gosu lstrano "$0" "$@"
 fi
 
@@ -53,6 +56,12 @@ if [ -d "/app/WebUI" ]; then
         npm run fetch-external-resources
         npm run ensure-electron
         npm run ensure-native-modules || true
+    fi
+
+    # Ensure service backend venv is set up
+    if [ ! -d "/app/service/.venv" ] || [ ! -f "/app/service/.venv/bin/python" ]; then
+        echo "Setting up AI Playground service backend..."
+        uv sync --project /app/service
     fi
 
     # Pre-cache signal-cli in user's app data as well

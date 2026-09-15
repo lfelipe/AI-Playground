@@ -7,7 +7,12 @@ services:
     user: "0:0"
     network_mode: host
     ipc: host
-    shm_size: '2gb'
+    shm_size: '4gb'
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "44"
+      - "990"
     environment:
       - DISPLAY=:99
       - AIPG_SIGNAL_CLI_PATH=/usr/local/bin/signal-cli
@@ -16,9 +21,15 @@ services:
       - aipg_node_modules:/app/WebUI/node_modules
       - aipg_config:/home/lstrano/.config
       - aipg_signal_data:/home/lstrano/.config/AI-Playground/signal-cli-data
+      - aipg_service_venv:/app/service/.venv
+      - aipg_models:/app/models
+      - aipg_ovms:/app/OpenVINO/ovms
     restart: unless-stopped
 
 volumes:
   aipg_node_modules:
   aipg_config:
   aipg_signal_data:
+  aipg_service_venv:
+  aipg_models:
+  aipg_ovms:

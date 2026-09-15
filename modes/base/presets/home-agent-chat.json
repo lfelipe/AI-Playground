@@ -5,7 +5,7 @@
   "description": "Inference profile used exclusively by the Home Agent (Telegram bridge). Tuned for tool-calling agentic behaviour over the wire.",
   "displayPriority": 0,
   "tags": ["Home Agent", "Telegram", "Agentic", "Tools"],
-  "backends": ["llamaCPP", "openVINO"],
+  "backends": ["openVINO", "llamaCPP"],
   "preferredModels": {
     "openVINO": "OpenVINO/Qwen3-8B-int4-cw-ov",
     "llamaCPP": "unsloth/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf"
